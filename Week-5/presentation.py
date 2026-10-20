@@ -1,18 +1,34 @@
 import matplotlib.pyplot as plt
 
-from analysis import AnalysisResult
+from analysis import AnalysisResult, PeriodComparison
 
 
-def prompt_country(prompt: str) -> str:
+def prompt_country(prompt: str, allowed_countries=("USA", "Russia")) -> str:
+    allowed_countries = tuple(sorted(set(allowed_countries)))
     while True:
         country = input(prompt).strip()
-        if country in ("USA", "Russia"):
+        if country in allowed_countries:
             return country
-        if country == "USSR":
+        if country == "USSR" and "Russia" in allowed_countries:
             return "Russia"
-        if country == "America":
+        if country == "America" and "USA" in allowed_countries:
             return "USA"
-        print("Invalid country. Please enter USA, Russia, or USSR.")
+        choices = ", ".join(allowed_countries)
+        print(f"Unknown country. Please enter one of: {choices}.")
+
+
+def prompt_year_range() -> tuple[int, int]:
+    while True:
+        try:
+            start_year = int(input("Enter the start year: ").strip())
+            end_year = int(input("Enter the end year: ").strip())
+        except ValueError:
+            print("Invalid year. Please enter whole-number years.")
+            continue
+        if start_year > end_year:
+            print("Invalid year range. Start year must not exceed end year.")
+            continue
+        return start_year, end_year
 
 
 def present(result: AnalysisResult) -> None:
@@ -42,3 +58,20 @@ def present(result: AnalysisResult) -> None:
     plt.tight_layout()
     plt.savefig("cumulative_duration.png")
     plt.show()
+
+
+def present_period_comparison(result: PeriodComparison) -> None:
+    print(
+        f"EVA activity comparison ({result.start_year}–{result.end_year}, inclusive):"
+    )
+    for summary in (result.country_a, result.country_b):
+        average = (
+            f"{summary.average_duration_hours:.2f} hours"
+            if summary.average_duration_hours is not None
+            else "unavailable"
+        )
+        print(f"{summary.country}:")
+        print(f"  Total number of EVAs: {summary.eva_count}")
+        print(f"  Total EVA duration: {summary.total_duration_hours:.2f} hours")
+        print(f"  Average EVA duration: {average}")
+    print(f"Greater total EVA duration: {result.greater_total_country}")
